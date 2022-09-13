@@ -14,6 +14,18 @@ terraform {
   }
 }
 
+resource "google_project_service" "enable-apis" {
+  project  = var.project_name
+  service  = "cloudresourcemanager.googleapis.com"
+  provider = google
+  timeouts {
+    create = local.timeout_create
+    update = local.timeout_update
+  }
+
+  disable_dependent_services = true
+}
+
 module "service_account" {
   source = "./modules/service_account"
 
@@ -21,7 +33,8 @@ module "service_account" {
   service_account_prefix = local.project_env_name_shortened
   roles = [
     "roles/editor",
-    "roles/iam.serviceAccountTokenCreator"
+    "roles/iam.serviceAccountTokenCreator",
+    "roles/resourcemanager.projectCreator"
   ]
   token_creators = var.admin_users
 }
@@ -45,14 +58,13 @@ module "firebase_project" {
   firebase_admin_users = var.admin_users
 }
 
-module "firebase_db" {
+module "firestore_db" {
   source = "./modules/firestore-db"
 
   firebase_project_id  = module.firebase_project.firebase_project.id
-  location             = module.firebase_project.firebase_project.location
+  location             = var.region
   firebase_admin_users = var.admin_users
 }
-
 
 module "firebase_web_app" {
   source = "./modules/firebase-web-app"
