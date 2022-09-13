@@ -10,7 +10,17 @@ resource "google_service_account" "sa-name" {
 }
 
 resource "google_project_iam_member" "project" {
-  project = var.project_name
-  role    = "roles/editor"
-  member  = "serviceAccount:${google_service_account.sa-name.email}"
+  for_each = toset(var.roles)
+  role     = each.key
+  member   = "serviceAccount:${google_service_account.sa-name.email}"
+  project  = var.project_name
+}
+
+resource "google_service_account_iam_binding" "token-creator-iam" {
+  service_account_id = "projects/-/serviceAccounts/${google_service_account.sa-name.email}"
+  role               = local.token_creator_role
+  for_each           = toset(var.token_creators)
+  members = [
+    "user:${each.value}",
+  ]
 }

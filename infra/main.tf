@@ -19,12 +19,16 @@ module "service_account" {
 
   project_name           = var.project_name
   service_account_prefix = local.project_env_name_shortened
+  roles = [
+    "roles/editor",
+    "roles/iam.serviceAccountTokenCreator"
+  ]
+  token_creators = var.admin_users
 }
-
 
 data "google_service_account_access_token" "sa" {
   provider               = google.tokengen
-  target_service_account = module.service_account.service_account_user
+  target_service_account = module.service_account.service_account_user_email
   lifetime               = local.lifetime
   scopes                 = local.service_account_scopes
 }
